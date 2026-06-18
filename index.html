@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>🐉 Dragon's Name Quest — Спаси принцессу</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'MedievalSharp', 'Comic Sans MS', cursive;
+            font-size: 22px;
+            background: #0f0f0f url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%231a1a1a" width="100" height="100"/><path d="M20 20 L30 15 L40 20 L35 30 L25 30 Z" fill="%233a3a3a" opacity="0.5"/><path d="M70 70 L80 65 L90 70 L85 80 L75 80 Z" fill="%233a3a3a" opacity="0.5"/></svg>');
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #f0e6d2;
+        }
+
+        #game {
+            width: 100%;
+            max-width: 850px;
+            background: rgba(15, 15, 15, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 25px 25px 35px;
+            box-shadow: 0 0 40px #8b0000, 0 20px 40px rgba(0,0,0,0.8);
+            border: 3px solid #b8860b;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #dragon-mascot {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 8px #ff6347);
+            color: #ffd700;
+        }
+
+        #progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .rune-slot {
+            width: 60px;
+            height: 60px;
+            background: #2f2f2f;
+            border: 3px solid #5a4a3a;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: #8b7a62;
+            transition: all 0.4s ease;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+            text-shadow: 0 0 5px black;
+        }
+        .rune-slot.collected {
+            background: #3a2e1e;
+            border-color: #ffd700;
+            color: #ffd700;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px #ff8c00;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+        .active-screen {
+            display: flex;
+        }
+
+        h2 {
+            font-size: 42px;
+            color: #ffd700;
+            text-align: center;
+            margin: 5px 0;
+            text-shadow: 2px 2px 0 #8b0000;
+            letter-spacing: 2px;
+            line-height: 1.2;
+        }
+
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background: #1f2e1f;
+            border-radius: 30px;
+            border: 3px solid #5a4a3a;
+            margin: 0 auto;
+            background-image: radial-gradient(circle at 20% 30%, #3a4a3a 5%, transparent 10%),
+                radial-gradient(circle at 80% 70%, #2a3a2a 8%, transparent 12%);
+        }
+        .map-point {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #5a5a5a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            box-shadow: 0 0 15px black;
+            transition: all 0.3s;
+            border: 3px solid #777;
+            color: #ccc;
+            cursor: not-allowed;
+            user-select: none;
+        }
+        .map-point.unlocked {
+            background: #b8860b;
+            border-color: #ffd700;
+            cursor: pointer;
+            color: #000;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 20px #ff8c00;
+        }
+        .map-point.completed {
+            background: #2e8b57;
+            border-color: #98fb98;
+            cursor: default;
+            color: #e0ffe0;
+            animation: none;
+            box-shadow: 0 0 15px #006400;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+        .map-label {
+            position: absolute;
+            width: 130px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffd700;
+            pointer-events: none;
+            transform: translate(-25px, 85px);
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .btn {
+            background: #8b0000;
+            border: 2px solid #ffd700;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-family: 'MedievalSharp', cursive;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffd700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.7);
+            transition: 0.2s;
+            text-align: center;
+            text-shadow: 1px 1px 0 black;
+        }
+        .btn:hover {
+            background: #a52a2a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px #ff4500;
+        }
+
+        .drop-zone {
+            background: #2f2f2f;
+            border: 3px dashed #b8860b;
+            border-radius: 20px;
+            padding: 15px;
+            min-height: 100px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            transition: background 0.3s;
+            color: #f0e6d2;
+            font-size: 22px;
+        }
+        .drop-zone.drag-over {
+            background: #3a2e1e;
+            border-color: #ffd700;
+        }
+        .drag-item {
+            background: #4a3a2a;
+            border: 2px solid #b8860b;
+            border-radius: 18px;
+            padding: 10px 18px;
+            font-size: 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: grab;
+            box-shadow: 0 2px 5px black;
+            user-select: none;
+            color: #ffd700;
+        }
+        .drag-item.dropped {
+            display: none;
+        }
+
+        .stone {
+            background: #696969;
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-size: 24px;
+            border: 2px solid #8b8b00;
+            cursor: pointer;
+            box-shadow: 2px 4px 6px black;
+            transition: 0.2s;
+            display: inline-block;
+            margin: 6px;
+            color: #ffd700;
+        }
+        .stone.correct {
+            background: #2e8b57;
+            border-color: #98fb98;
+            cursor: default;
+        }
+        .stone.wrong {
+            background: #8b0000;
+            border-color: #ff6347;
+            animation: shake 0.5s;
+        }
+
+        #hearts {
+            font-size: 40px;
+            margin: 5px 0;
+        }
+
+        .image-target {
+            width: 100px;
+            height: 100px;
+            background: #4a3a2a;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            border: 3px solid #b8860b;
+            box-shadow: 0 0 10px black;
+        }
+
+        .lock {
+            width: 85px;
+            height: 85px;
+            background: #4a4440;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            border: 3px solid #b8860b;
+            color: #fff;
+            box-shadow: 0 0 8px black;
+        }
+        .key {
+            background: #b8860b;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 26px;
+            font-weight: bold;
+            cursor: grab;
+            color: #000;
+        }
+
+        .hidden {
+            display: none;
+        }
+        .shake {
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        #scroll-story {
+            font-size: 32px;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .word {
+            cursor: pointer;
+            border-bottom: 1px dashed #ffd700;
+            position: relative;
+            display: inline-block;
+            margin: 0 2px;
+        }
+        .word:hover {
+            color: #ffd700;
+            text-shadow: 0 0 5px #ff8c00;
+        }
+        .translation-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 120%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2f2f2f;
+            border: 2px solid #b8860b;
+            border-radius: 10px;
+            padding: 5px 12px;
+            font-size: 20px;
+            color: #ffd700;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .word:active .translation-tooltip,
+        .word:focus .translation-tooltip,
+        .word:hover .translation-tooltip {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div id="game">
+    <div id="dragon-mascot">🐉 <span id="dragon-speech">Принцесса в беде! Собери моё имя…</span> 🐉</div>
+    <div id="progress-bar">
+        <div class="rune-slot" id="rune0">?</div>
+        <div class="rune-slot" id="rune1">?</div>
+        <div class="rune-slot" id="rune2">?</div>
+        <div class="rune-slot" id="rune3">?</div>
+        <div class="rune-slot" id="rune4">?</div>
+        <div class="rune-slot" id="rune5">?</div>
+    </div>
+
+    <!-- Карта -->
+    <div id="screen-map" class="screen active-screen">
+        <h2>🗺️ Dark Kingdom</h2>
+        <div id="map-container">
+            <div class="map-point" id="point1" style="top:15px;left:45px;" data-station="1">🌳</div><div class="map-label" style="top:95px;left:25px;">Forest / Лес</div>
+            <div class="map-point" id="point2" style="top:90px;left:260px;" data-station="2">🏞️</div><div class="map-label" style="top:170px;left:240px;">River / Река</div>
+            <div class="map-point" id="point3" style="top:210px;left:95px;" data-station="3">🎣</div><div class="map-label" style="top:290px;left:75px;">Lake / Озеро</div>
+            <div class="map-point" id="point4" style="top:130px;left:450px;" data-station="4">🏔️</div><div class="map-label" style="top:210px;left:430px;">Cave / Пещера</div>
+            <div class="map-point" id="point5" style="top:260px;left:350px;" data-station="5">🏰</div><div class="map-label" style="top:340px;left:330px;">Tower / Башня</div>
+            <div class="map-point" id="point6" style="top:40px;left:560px;" data-station="6">📜</div><div class="map-label" style="top:120px;left:540px;">Scroll / Свиток</div>
+        </div>
+        <p style="font-size:22px;color:#c0b090;">Выбери испытание, кликнув на сияющую точку!</p>
+    </div>
+
+    <!-- Станция 1: Лес -->
+    <div id="screen-station1" class="screen">
+        <h2>🌳 Whispering Forest<br><span style="font-size:0.7em;">(Лес шёпотов)</span></h2>
+        <p style="color:#ffd700; font-size:24px;">🐉 "Разложи слова по дуплам, смертный!"</p>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;">
+            <div class="drop-zone" id="zone-shchck" data-accept="sh,ch,ck">🛡️ sh/ch/ck</div>
+            <div class="drop-zone" id="zone-thwh" data-accept="th1,th2,wh">👅 th/wh</div>
+            <div class="drop-zone" id="zone-ph" data-accept="ph">📷 ph</div>
+        </div>
+        <div id="words1-container" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;"></div>
+    </div>
+
+    <!-- Станция 2: Река -->
+    <div id="screen-station2" class="screen">
+        <h2>🏞️ River of Vowels<br><span style="font-size:0.7em;">(Река гласных)</span></h2>
+        <div id="hearts">❤️❤️❤️</div>
+        <p style="color:#ffd700; font-size:24px;">🐉 "Ступай только по верным камням!"</p>
+        <div id="stones-container" style="display:flex;flex-wrap:wrap;justify-content:center;"></div>
+    </div>
+
+    <!-- Станция 3: Озеро (Odd One Out) -->
+    <div id="screen-station3" class="screen">
+        <h2>🎣 Mysterious Lake<br><span style="font-size:0.7em;">(Озеро тайн)</span></h2>
+        <p style="color:#ffd700; font-size:24px;">🐉 "Найди лишнее слово в каждом ряду!"</p>
+        <div id="odd-cards" style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;"></div>
+        <p id="odd-feedback" style="color:#ffd700; font-size:26px;"></p>
+    </div>
+
+    <!-- Станция 4: Пещера -->
+    <div id="screen-station4" class="screen">
+        <h2>🏔️ Mirror Cave<br><span style="font-size:0.7em;">(Пещера зеркал)</span></h2>
+        <p style="color:#ffd700; font-size:24px;">🐉 "Совмести осколки с образами!"</p>
+        <div style="display:flex;flex-wrap:wrap;gap:15px;justify-content:center;" id="images-container"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin-top:15px;" id="shards-container"></div>
+    </div>
+
+    <!-- Станция 5: Башня -->
+    <div id="screen-station5" class="screen">
+        <h2>🏰 Wise Tower<br><span style="font-size:0.7em;">(Башня мудреца)</span></h2>
+        <p style="color:#ffd700; font-size:24px;">🐉 "Отвори замки ключами!"</p>
+        <div style="display:flex;flex-wrap:wrap;gap:15px;justify-content:center;" id="locks-container"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:15px;justify-content:center;margin-top:15px;" id="keys-container"></div>
+    </div>
+
+    <!-- Станция 6: Свиток -->
+    <div id="screen-station6" class="screen">
+        <h2>📜 Scroll of Fate<br><span style="font-size:0.7em;">(Свиток судьбы)</span></h2>
+        <div id="scroll-story" style="background:#2f2a1f;padding:25px;border-radius:20px;border:2px solid #b8860b;max-width:95%;text-align:left;color:#f0e6d2;"></div>
+        <button class="btn" id="next-part-btn">Далее 📖</button>
+        <div id="truefalse-container" class="hidden" style="text-align:center;"></div>
+        <div id="choice-container" class="hidden" style="text-align:center;"></div>
+        <div id="translate-container" class="hidden" style="text-align:center; margin-top:15px;"></div>
+    </div>
+
+    <!-- Финал -->
+    <div id="screen-final" class="screen">
+        <h2>🏁 The Awakening</h2>
+        <p style="font-size:26px;">Ты собрал все руны! Имя дракона:</p>
+        <div style="font-size:60px;font-weight:bold;color:#ffd700;letter-spacing:12px;" id="dragon-name"></div>
+        <button class="btn" id="dragon-sleep-btn">🐉 Dragon, sleep! 💤</button>
+        <div id="final-result" class="hidden" style="text-align:center;">
+            <p style="font-size:36px;">👸 Принцесса свободна! 🎉</p>
+            <p style="font-size:52px;">✨ Спасибо, герой! ✨</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const runes = ['D', 'R', 'A', 'G', 'O', 'N'];
+        let collectedRunes = [];
+        let stationsCompleted = new Set();
+        let draggedElement = null;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
+            const screen = document.getElementById('screen-' + screenId);
+            if (screen) screen.classList.add('active-screen');
+        }
+
+        function updateProgress() {
+            for (let i = 0; i < 6; i++) {
+                const slot = document.getElementById('rune' + i);
+                if (collectedRunes[i]) {
+                    slot.textContent = collectedRunes[i];
+                    slot.classList.add('collected');
+                } else {
+                    slot.textContent = '?';
+                    slot.classList.remove('collected');
+                }
+            }
+        }
+
+        function collectRune(index) {
+            if (!collectedRunes[index]) {
+                collectedRunes[index] = runes[index];
+                updateProgress();
+            }
+            stationsCompleted.add(index + 1);
+            const point = document.getElementById('point' + (index + 1));
+            if (point) {
+                point.classList.remove('unlocked');
+                point.classList.add('completed');
+            }
+        }
+
+        function completeStation(stationNum) {
+            collectRune(stationNum - 1);
+            document.getElementById('dragon-speech').textContent = 'Руна собрана! Продолжай...';
+            setTimeout(() => {
+                showScreen('map');
+                if (stationsCompleted.size === 6) {
+                    if (!document.getElementById('final-btn-map')) {
+                        const btn = document.createElement('button');
+                        btn.className = 'btn';
+                        btn.id = 'final-btn-map';
+                        btn.textContent = '🏁 К дракону!';
+                        btn.style.marginTop = '20px';
+                        btn.addEventListener('click', () => showScreen('final'));
+                        document.getElementById('screen-map').appendChild(btn);
+                    }
+                }
+            }, 1500);
+        }
+
+        function initMap() {
+            for (let i = 1; i <= 6; i++) {
+                const point = document.getElementById('point' + i);
+                point.classList.remove('completed');
+                point.classList.add('unlocked');
+            }
+            document.querySelectorAll('.map-point').forEach(point => {
+                point.addEventListener('click', function(e) {
+                    const station = parseInt(this.dataset.station);
+                    if (this.classList.contains('unlocked') && !stationsCompleted.has(station)) {
+                        showScreen('station' + station);
+                        buildStation(station);
+                    }
+                });
+            });
+        }
+
+        function buildStation(num) {
+            if (num === 1) buildStation1();
+            else if (num === 2) buildStation2();
+            else if (num === 3) buildStation3();
+            else if (num === 4) buildStation4();
+            else if (num === 5) buildStation5();
+            else if (num === 6) buildStation6();
+        }
+
+        // Станция 1
+        const words1 = [
+            { text: 'ship', emoji: '🚢', group: 'sh' }, { text: 'fish', emoji: '🐟', group: 'sh' },
+            { text: 'chip', emoji: '🍟', group: 'ch' }, { text: 'chin', emoji: '🤔', group: 'ch' },
+            { text: 'duck', emoji: '🦆', group: 'ck' }, { text: 'clock', emoji: '🕰️', group: 'ck' },
+            { text: 'this', emoji: '👉', group: 'th1' }, { text: 'mother', emoji: '👩', group: 'th1' },
+            { text: 'thin', emoji: '📏', group: 'th2' }, { text: 'tooth', emoji: '🦷', group: 'th2' },
+            { text: 'whale', emoji: '🐋', group: 'wh' }, { text: 'wheel', emoji: '🎡', group: 'wh' },
+            { text: 'phone', emoji: '📱', group: 'ph' }, { text: 'photo', emoji: '📷', group: 'ph' }
+        ];
+        function buildStation1() {
+            const container = document.getElementById('words1-container');
+            container.innerHTML = '';
+            const shuffled = [...words1].sort(() => Math.random() - 0.5);
+            shuffled.forEach((w, idx) => {
+                const el = document.createElement('div');
+                el.className = 'drag-item';
+                el.id = 'w1-' + idx;
+                el.draggable = true;
+                el.dataset.group = w.group;
+                el.innerHTML = `${w.emoji} ${w.text}`;
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragend', handleDragEnd);
+                container.appendChild(el);
+            });
+            document.querySelectorAll('#screen-station1 .drop-zone').forEach(zone => {
+                zone.querySelectorAll('.dropped-word').forEach(w => w.remove());
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDropStation1);
+            });
+            window._station1Total = words1.length;
+            window._station1Done = 0;
+        }
+        function handleDragStart(e) { draggedElement = this; e.dataTransfer.setData('text/plain', this.id); }
+        function handleDragEnd(e) { this.classList.remove('dragging'); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDropStation1(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            const id = e.dataTransfer.getData('text/plain');
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('dropped')) return;
+            const group = el.dataset.group;
+            const accepted = zone.dataset.accept.split(',');
+            if (accepted.includes(group)) {
+                const span = document.createElement('span');
+                span.className = 'dropped-word';
+                span.textContent = el.textContent;
+                zone.appendChild(span);
+                el.classList.add('dropped');
+                window._station1Done++;
+                if (window._station1Done === window._station1Total) completeStation(1);
+            } else {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
+
+        // Станция 2
+        const stonesData = [
+            { text: 'rain', correct: true }, { text: 'rane', correct: false },
+            { text: 'play', correct: true }, { text: 'plei', correct: false },
+            { text: 'cake', correct: true }, { text: 'caik', correct: false },
+            { text: 'bike', correct: true }, { text: 'baik', correct: false },
+            { text: 'time', correct: true }, { text: 'taim', correct: false },
+            { text: 'train', correct: true }, { text: 'trayn', correct: false },
+            { text: 'gate', correct: true }, { text: 'giat', correct: false },
+            { text: 'smile', correct: true }, { text: 'smail', correct: false }
+        ];
+        function buildStation2() {
+            const container = document.getElementById('stones-container');
+            container.innerHTML = '';
+            const shuffled = [...stonesData].sort(() => Math.random() - 0.5);
+            shuffled.forEach((s, idx) => {
+                const stone = document.createElement('div');
+                stone.className = 'stone';
+                stone.textContent = s.text;
+                stone.dataset.correct = s.correct;
+                stone.addEventListener('click', stoneClickHandler);
+                container.appendChild(stone);
+            });
+            window._station2Lives = 3;
+            window._station2CorrectLeft = stonesData.filter(s => s.correct).length;
+            updateHearts();
+        }
+        function stoneClickHandler(e) {
+            const stone = e.currentTarget;
+            if (stone.classList.contains('correct') || stone.classList.contains('wrong')) return;
+            if (stone.dataset.correct === 'true') {
+                stone.classList.add('correct');
+                window._station2CorrectLeft--;
+                if (window._station2CorrectLeft === 0) completeStation(2);
+            } else {
+                stone.classList.add('wrong');
+                window._station2Lives--;
+                updateHearts();
+                setTimeout(() => stone.classList.remove('wrong'), 600);
+                if (window._station2Lives <= 0) {
+                    alert('Ты упал в реку! Попробуем снова.');
+                    buildStation2();
+                }
+            }
+        }
+        function updateHearts() {
+            let heartsStr = '';
+            for (let i = 0; i < 3; i++) heartsStr += i < window._station2Lives ? '❤️' : '🖤';
+            document.getElementById('hearts').textContent = heartsStr;
+        }
+
+        // Станция 3 (Odd One Out) — увеличены раунды, перемешивание слов
+        const oddRounds = [
+            { words: ['home', 'rope', 'bone', 'book'], odd: 'book' },
+            { words: ['boat', 'soap', 'coat', 'cold'], odd: 'cold' },
+            { words: ['slow', 'snow', 'blow', 'cow'], odd: 'cow' },
+            { words: ['gold', 'cold', 'old', 'moon'], odd: 'moon' },
+            { words: ['could', 'should', 'would', 'cloud'], odd: 'cloud' },
+            { words: ['moon', 'food', 'soon', 'book'], odd: 'book' },
+            { words: ['rain', 'train', 'brain', 'ran'], odd: 'ran' },
+            { words: ['play', 'day', 'say', 'key'], odd: 'key' }
+        ];
+        function buildStation3() {
+            window._oddRound = 0;
+            renderOddRound();
+        }
+        function renderOddRound() {
+            const container = document.getElementById('odd-cards');
+            const feedback = document.getElementById('odd-feedback');
+            if (window._oddRound >= oddRounds.length) {
+                completeStation(3);
+                return;
+            }
+            const round = oddRounds[window._oddRound];
+            const shuffledWords = [...round.words].sort(() => Math.random() - 0.5);
+            container.innerHTML = '';
+            shuffledWords.forEach((word, i) => {
+                const card = document.createElement('div');
+                card.className = 'drag-item';
+                card.style.cursor = 'pointer';
+                card.textContent = word;
+                card.addEventListener('click', function(e) {
+                    if (word === round.odd) {
+                        window._oddRound++;
+                        renderOddRound();
+                    } else {
+                        card.classList.add('shake');
+                        setTimeout(() => card.classList.remove('shake'), 500);
+                    }
+                });
+                container.appendChild(card);
+            });
+            feedback.textContent = `Найди лишнее слово! Раунд ${window._oddRound+1}/${oddRounds.length}`;
+        }
+
+        // Станция 4 (Пещера) — исправлено добавление id
+        const mirrorPairs = [
+            { word: 'cow', emoji: '🐄', shard: 'c_w' }, { word: 'house', emoji: '🏠', shard: 'h_use' },
+            { word: 'coin', emoji: '💰', shard: 'c_in' }, { word: 'boy', emoji: '👦', shard: 'b_y' },
+            { word: 'leaf', emoji: '🍃', shard: 'l_af' }, { word: 'bee', emoji: '🐝', shard: 'b_e' },
+            { word: 'tie', emoji: '👔', shard: 't_e' }, { word: 'cloud', emoji: '☁️', shard: 'cl_ud' },
+            { word: 'noise', emoji: '🔊', shard: 'n_ise' }, { word: 'toy', emoji: '🧸', shard: 't_y' }
+        ];
+        function buildStation4() {
+            const imgContainer = document.getElementById('images-container');
+            const shardsContainer = document.getElementById('shards-container');
+            imgContainer.innerHTML = '';
+            shardsContainer.innerHTML = '';
+            mirrorPairs.forEach((p, idx) => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'image-target drop-zone';
+                imgDiv.dataset.word = p.word;
+                imgDiv.textContent = p.emoji;
+                imgDiv.addEventListener('dragover', handleDragOver);
+                imgDiv.addEventListener('drop', handleDropStation4);
+                imgContainer.appendChild(imgDiv);
+
+                const shard = document.createElement('div');
+                shard.className = 'drag-item';
+                shard.draggable = true;
+                shard.dataset.word = p.word;
+                shard.textContent = p.shard;
+                shard.id = 'shard-' + idx;
+                shard.addEventListener('dragstart', handleDragStart);
+                shard.addEventListener('dragend', handleDragEnd);
+                shardsContainer.appendChild(shard);
+            });
+            window._station4Total = mirrorPairs.length;
+            window._station4Done = 0;
+        }
+        function handleDropStation4(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            const id = e.dataTransfer.getData('text/plain');
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('dropped')) return;
+            if (el.dataset.word === zone.dataset.word) {
+                el.classList.add('dropped');
+                zone.style.background = '#3a5a3a';
+                window._station4Done++;
+                if (window._station4Done === window._station4Total) completeStation(4);
+            } else {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
+
+        // Станция 5
+        const lockData = [
+            { word: 'car', emoji: '🚗', key: 'ar' }, { word: 'fork', emoji: '🍴', key: 'or' },
+            { word: 'her', emoji: '👧', key: 'er' }, { word: 'turn', emoji: '↩️', key: 'ur' },
+            { word: 'bird', emoji: '🐦', key: 'ir' }, { word: 'flute', emoji: '🎶', key: 'u_e' },
+            { word: 'blue', emoji: '🟦', key: 'ue' }, { word: 'fruit', emoji: '🍇', key: 'ui' }
+        ];
+        function buildStation5() {
+            const locksDiv = document.getElementById('locks-container');
+            const keysDiv = document.getElementById('keys-container');
+            locksDiv.innerHTML = '';
+            keysDiv.innerHTML = '';
+            lockData.forEach((l, idx) => {
+                const lock = document.createElement('div');
+                lock.className = 'lock drop-zone';
+                lock.dataset.key = l.key;
+                lock.textContent = l.emoji;
+                lock.addEventListener('dragover', handleDragOver);
+                lock.addEventListener('drop', handleDropStation5);
+                locksDiv.appendChild(lock);
+                const key = document.createElement('div');
+                key.className = 'key drag-item';
+                key.draggable = true;
+                key.dataset.key = l.key;
+                key.textContent = l.key;
+                key.id = 'key-' + idx;
+                key.addEventListener('dragstart', handleDragStart);
+                key.addEventListener('dragend', handleDragEnd);
+                keysDiv.appendChild(key);
+            });
+            window._station5Total = lockData.length;
+            window._station5Done = 0;
+        }
+        function handleDropStation5(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            const id = e.dataTransfer.getData('text/plain');
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('dropped')) return;
+            if (el.dataset.key === zone.dataset.key) {
+                el.classList.add('dropped');
+                zone.textContent = lockData.find(l => l.key === zone.dataset.key).word;
+                zone.style.background = '#3a5a3a';
+                window._station5Done++;
+                if (window._station5Done === window._station5Total) completeStation(5);
+            } else {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
+
+        // Станция 6 (Свиток) — разбивка на предложения, подсказки перевода, больше вопросов
+        const sentences = [
+            "One cold morning a little girl named Joy finds an old boat on her grandma's porch.",
+            "The boat is made of wood and it has a red sail that says \"Toy\".",
+            "Joy gives the boat a push and says, \"I wish I could go on an adventure!\"",
+            "Suddenly a magic wind blows — whoosh! Joy and the boat are lifted into the air!",
+            "They fly over hills and rooftops, past cows in fields and birds on telephone wires.",
+            "The boat lands softly near a brook, where two frogs are sitting on a log.",
+            "\"Welcome aboard!\" one frog croaks. Joy smiles and climbs aboard their log raft.",
+            "Together they float down the stream, looking at the stars in the sky.",
+            "\"Look!\" Joy points. \"There’s the moon and a big, round balloon!\"",
+            "The frogs wave goodbye as Joy’s boat begins to glow.",
+            "A golden light rises up from the water and takes her back home.",
+            "When she opens her eyes Joy is back on the porch — but now there is a new toy in the boat: a shiny gold coin that says, “Thank you for the joy!”"
+        ];
+
+        // Словарь переводов (ключевые слова)
+        const translations = {
+            'cold': 'холодный', 'morning': 'утро', 'little': 'маленькая', 'girl': 'девочка', 'named': 'по имени',
+            'joy': 'радость', 'finds': 'находит', 'old': 'старая', 'boat': 'лодка', 'grandma': 'бабушка',
+            'porch': 'крыльцо', 'made': 'сделана', 'wood': 'дерево', 'red': 'красный', 'sail': 'парус',
+            'says': 'говорит', 'toy': 'игрушка', 'gives': 'даёт', 'push': 'толчок', 'wish': 'желаю',
+            'could': 'мог бы', 'adventure': 'приключение', 'suddenly': 'вдруг', 'magic': 'волшебный',
+            'wind': 'ветер', 'blows': 'дует', 'whoosh': 'вжух', 'lifted': 'подняты', 'air': 'воздух',
+            'fly': 'летят', 'over': 'над', 'hills': 'холмы', 'rooftops': 'крыши', 'past': 'мимо',
+            'cows': 'коровы', 'fields': 'поля', 'birds': 'птицы', 'telephone': 'телефонные', 'wires': 'провода',
+            'lands': 'приземляется', 'softly': 'мягко', 'near': 'рядом', 'brook': 'ручей', 'frogs': 'лягушки',
+            'sitting': 'сидят', 'log': 'бревно', 'welcome': 'добро', 'aboard': 'на борт', 'croaks': 'квакает',
+            'smiles': 'улыбается', 'climbs': 'забирается', 'raft': 'плот', 'together': 'вместе', 'float': 'плывут',
+            'down': 'вниз по', 'stream': 'ручей', 'looking': 'смотрят', 'stars': 'звёзды', 'sky': 'небо',
+            'points': 'показывает', 'moon': 'луна', 'big': 'большой', 'round': 'круглый', 'balloon': 'воздушный шар',
+            'wave': 'машут', 'goodbye': 'прощай', 'begins': 'начинает', 'glow': 'светиться', 'golden': 'золотой',
+            'light': 'свет', 'rises': 'поднимается', 'water': 'вода', 'takes': 'берёт', 'back': 'обратно',
+            'home': 'домой', 'opens': 'открывает', 'eyes': 'глаза', 'new': 'новая', 'shiny': 'блестящая',
+            'gold': 'золотая', 'coin': 'монета', 'thank': 'благодарю', 'you': 'тебя', 'for': 'за'
+        };
+
+        const trueFalseQuestions = [
+            { statement: "Joy found a boat in the garden.", answer: false },
+            { statement: "The boat had a green sail.", answer: false },
+            { statement: "Joy flew in the boat with a magic wind.", answer: true },
+            { statement: "She saw cows and birds.", answer: true },
+            { statement: "The frogs were on a bike.", answer: false },
+            { statement: "The boat was made of wood.", answer: true },
+            { statement: "The sail said 'Toy'.", answer: true },
+            { statement: "Joy found the boat on her grandma's porch.", answer: true }
+        ];
+        const choiceQuestions = [
+            { question: "What color was the boat’s sail?", options: ["Blue", "Red", "Green"], correct: 1 },
+            { question: "Who were sitting on the log?", options: ["Birds", "Cats", "Frogs"], correct: 2 },
+            { question: "What did the coin say?", options: ["Good luck!", "Thank you for the joy!", "Come again!"], correct: 1 },
+            { question: "Where did Joy find the boat?", options: ["In the garden", "On the porch", "In the brook"], correct: 1 },
+            { question: "What did the frogs say?", options: ["Hello!", "Welcome aboard!", "Goodbye!"], correct: 1 },
+            { question: "What did Joy see in the sky?", options: ["A kite", "The moon and a balloon", "An airplane"], correct: 1 }
+        ];
+        const translatePairs = [
+            { rus: "быть", eng: "to be" },
+            { rus: "мочь", eng: "can" },
+            { rus: "иметь", eng: "have" },
+            { rus: "имеет (3 л.)", eng: "has got" }
+        ];
+
+        let currentSentence = 0;
+        let tfIndex = 0;
+        let choiceIndex = 0;
+        let translateDone = 0;
+
+        function buildStation6() {
+            currentSentence = 0;
+            tfIndex = 0;
+            choiceIndex = 0;
+            translateDone = 0;
+            document.getElementById('scroll-story').innerHTML = '';
+            document.getElementById('truefalse-container').classList.add('hidden');
+            document.getElementById('choice-container').classList.add('hidden');
+            document.getElementById('translate-container').classList.add('hidden');
+            document.getElementById('next-part-btn').classList.remove('hidden');
+            showSentence();
+        }
+
+        function showSentence() {
+            const container = document.getElementById('scroll-story');
+            if (currentSentence < sentences.length) {
+                let html = '<p style="font-size:32px; line-height:1.8;">';
+                const words = sentences[currentSentence].split(' ');
+                words.forEach(word => {
+                    const cleanWord = word.replace(/[.,!?;:""'’]/g, '');
+                    const lowerWord = cleanWord.toLowerCase();
+                    const translation = translations[lowerWord] || '';
+                    html += `<span class="word" data-word="${lowerWord}">${word}<span class="translation-tooltip">${translation}</span></span> `;
+                });
+                html += '</p>';
+                container.innerHTML = html;
+                document.getElementById('next-part-btn').textContent = currentSentence === sentences.length - 1 ? 'К вопросам ❓' : 'Далее 📖';
+            } else {
+                container.innerHTML = '<p style="font-size:32px;">📜 Отлично! Ответь на вопросы.</p>';
+                document.getElementById('next-part-btn').classList.add('hidden');
+                document.getElementById('truefalse-container').classList.remove('hidden');
+                showTrueFalse();
+            }
+        }
+
+        function showTrueFalse() {
+            const container = document.getElementById('truefalse-container');
+            if (tfIndex < trueFalseQuestions.length) {
+                const q = trueFalseQuestions[tfIndex];
+                container.innerHTML = `<p style="font-size:30px;">${q.statement}</p>
+                    <button class="btn" id="tf-true" style="font-size:28px;">True</button>
+                    <button class="btn" id="tf-false" style="font-size:28px;">False</button>`;
+                document.getElementById('tf-true').addEventListener('click', () => checkTF(true));
+                document.getElementById('tf-false').addEventListener('click', () => checkTF(false));
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('choice-container').classList.remove('hidden');
+                showChoice();
+            }
+        }
+
+        function checkTF(userAnswer) {
+            if (userAnswer === trueFalseQuestions[tfIndex].answer) {
+                tfIndex++;
+                showTrueFalse();
+            } else {
+                alert('Неверно! Попробуй ещё раз.');
+            }
+        }
+
+        function showChoice() {
+            const container = document.getElementById('choice-container');
+            if (choiceIndex < choiceQuestions.length) {
+                const q = choiceQuestions[choiceIndex];
+                let html = `<p style="font-size:30px;">${q.question}</p>`;
+                q.options.forEach((opt, i) => {
+                    html += `<button class="btn" style="margin:8px; font-size:26px;" data-idx="${i}">${opt}</button>`;
+                });
+                container.innerHTML = html;
+                container.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        if (parseInt(this.dataset.idx) === q.correct) {
+                            choiceIndex++;
+                            showChoice();
+                        } else {
+                            alert('Подумай ещё!');
+                        }
+                    });
+                });
+            } else {
+                container.classList.add('hidden');
+                document.getElementById('translate-container').classList.remove('hidden');
+                buildTranslate();
+            }
+        }
+
+        function buildTranslate() {
+            const cont = document.getElementById('translate-container');
+            cont.innerHTML = '<p style="font-size:28px;color:#ffd700;">🐉 Переведи слова (перетащи английский вариант к русскому):</p>';
+            const dropZonesDiv = document.createElement('div');
+            dropZonesDiv.style.display = 'flex';
+            dropZonesDiv.style.flexWrap = 'wrap';
+            dropZonesDiv.style.gap = '15px';
+            dropZonesDiv.style.justifyContent = 'center';
+            translatePairs.forEach((p, i) => {
+                const zone = document.createElement('div');
+                zone.className = 'drop-zone';
+                zone.style.minWidth = '140px';
+                zone.style.fontSize = '24px';
+                zone.textContent = p.rus;
+                zone.dataset.eng = p.eng;
+                zone.dataset.index = i;
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleTranslateDrop);
+                dropZonesDiv.appendChild(zone);
+            });
+            cont.appendChild(dropZonesDiv);
+            const wordsDiv = document.createElement('div');
+            wordsDiv.style.display = 'flex';
+            wordsDiv.style.flexWrap = 'wrap';
+            wordsDiv.style.gap = '15px';
+            wordsDiv.style.justifyContent = 'center';
+            wordsDiv.style.marginTop = '15px';
+            const shuffledEng = [...translatePairs].sort(() => Math.random() - 0.5);
+            shuffledEng.forEach((p, i) => {
+                const drag = document.createElement('div');
+                drag.className = 'drag-item';
+                drag.draggable = true;
+                drag.textContent = p.eng;
+                drag.dataset.eng = p.eng;
+                drag.id = 'trans-' + i;
+                drag.addEventListener('dragstart', handleDragStart);
+                drag.addEventListener('dragend', handleDragEnd);
+                wordsDiv.appendChild(drag);
+            });
+            cont.appendChild(wordsDiv);
+            window._translateTotal = translatePairs.length;
+            window._translateDone = 0;
+        }
+
+        function handleTranslateDrop(e) {
+            e.preventDefault();
+            const zone = e.currentTarget;
+            const id = e.dataTransfer.getData('text/plain');
+            const el = document.getElementById(id);
+            if (!el || el.classList.contains('dropped')) return;
+            if (el.dataset.eng === zone.dataset.eng) {
+                el.classList.add('dropped');
+                zone.style.background = '#3a5a3a';
+                zone.textContent += ' ✅';
+                window._translateDone++;
+                if (window._translateDone === window._translateTotal) {
+                    completeStation(6);
+                }
+            } else {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
+
+        document.getElementById('next-part-btn').addEventListener('click', function() {
+            currentSentence++;
+            showSentence();
+        });
+
+        // Финал
+        function buildFinal() {
+            document.getElementById('dragon-name').textContent = collectedRunes.join('');
+            document.getElementById('final-result').classList.add('hidden');
+            document.getElementById('dragon-sleep-btn').classList.remove('hidden');
+        }
+        document.getElementById('dragon-sleep-btn').addEventListener('click', function() {
+            document.getElementById('final-result').classList.remove('hidden');
+            this.classList.add('hidden');
+            document.getElementById('final-result').innerHTML += '<p style="font-size:52px;">🎆🎇✨👸🐉💤</p>';
+        });
+
+        const origShow = showScreen;
+        showScreen = function(screenId) {
+            origShow(screenId);
+            if (screenId === 'final') buildFinal();
+        };
+
+        initMap();
+        updateProgress();
+        showScreen('map');
+    })();
+</script>
+</body>
+</html>
+```
